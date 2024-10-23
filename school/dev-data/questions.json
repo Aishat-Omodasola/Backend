@@ -1,0 +1,27 @@
+[
+    {
+        "name":"Aihat",
+        "category": "pre-school",
+        "subjects": []
+    },
+    {
+        "name":"Aihat",
+        "category": "col-school",
+        "subjects": []
+    },
+    {    
+        "name":"Aihat",
+        "category": "software-engineering",
+        "subjects": []
+    },
+    {    
+        "name":"Aihat",
+        "category": "civil-engineering",
+        "subjects": []
+    },
+    {
+        "name":"Aihat",
+        "category": "electrical-engineering",
+        "subjects": []
+    }
+]
