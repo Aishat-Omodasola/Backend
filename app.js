@@ -16,7 +16,7 @@ config({ path: "./utilities/.env" });
 
 // Database Connection
 const DB = process.env.DATABASE;
-console.log(DB);
+// console.log(DB);
 
 mongoose
   .connect(DB, {})
@@ -51,7 +51,10 @@ const limiter = rateLimit({
 app.use("/api", limiter);
 
 // Set security HTTP headers
-app.use(helmet())
+app.use(helmet({
+  contentSecurityPolicy: false, // Disable CSP if using inline scripts
+}));
+// app.use(helmet())
 // Define Routes
 app.use("/api/v1/questions", questionRouter);
 app.use("/api/v1/users", userRouter); // Mount user routes

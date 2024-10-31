@@ -35,15 +35,6 @@ export const signup = async (req, res, next) => {
    try {
     const newUser = await User.create(req.body);
     createSendToken(newUser, 201, res);
-    // const token = signToken(newUser._id);
-
-    // res.status(201).json({
-    //     status: "success",
-    //     token,
-    //     data:{
-    //         user: newUser
-    //     }
-    // });
    } catch (error) {
     res.status(500).json({
         status: "fail",
@@ -78,12 +69,7 @@ export const login = async (req, res, next) => {
         // 'pass123' === '$2a$12$1/MLeJGEi4.83/oq69wzdeuHLU35KQbBv39jYNbI5bNxNwIDs6KCe'
         // console.log(user);
         // 3) if everything is ok, send Token to client
-        createSendToken(user, 200, res);
-    //     const token = signToken(user._id);
-    //     res.status(200).json({
-    //         status: "success",
-    //         token
-    //    });  
+        createSendToken(user, 200, res);  
     } catch (error) {
         res.status(500).json({error});  
     }
@@ -94,7 +80,7 @@ export const protect = async (req, res, next) => {
     try {
     //1) Getting token and check of it's there
     let token;
-    if(req.hearders.authorization && req.hearders.authorization.startWith("Bearer")) {
+    if(req.headers.authorization && req.headers.authorization.startWith("Bearer")) {
      token = req.headers.authorization.split(" ")[1];
     }
     // console.log(token);
@@ -118,7 +104,7 @@ export const protect = async (req, res, next) => {
     }
     
     //3) Check if user still exists
-    const currentUser = await user.findById(decoded.id);
+    const currentUser = await User.findById(decoded.id);
     if(!currentUser) {
         return res.status(401).json({
             status: "fail",
@@ -152,59 +138,81 @@ export const restrictTo = (...roles) => {
     };
 };
 export const forgotPassword = async (req, res, next) => {
-   try {
-       // Log to check if email is received
-       console.log("Received email: ", req.body.email)
-       // Get user based on POSTed email
-    const user = await User.findOne({email: req.body.email});
-    if (!user) {
-        return res.status(404).json({
-            status: "fail",
-            message: "There is no user with email adress"
-        });
-    } 
-
-    //Generate the random reset token
-    const resetToken = user.createPasswordResetToken();
-    await user.save({validateBeforeSave: false}); // If you send the token to the user via email, log that you're doing it (for debugging)
-       console.log("Password reset token created: ", resetToken);
-        // If you send the token to the user via email, log that you're doing it (for debugging)
-        console.log("Password reset token created: ", resetToken);
-        res.status(200).json({
-            status: "success",
-            message: "Password reset token generated"
-        });
-    // 3) send it to user's email
-    const resetURL = `${req.protocol}://${req.get(
-        "host")}/api/v1/resetPassword/${resetToken}`;
-        const message = `Forgot your password? Submit a 
-PATCH request with your new password and passwordConfirm to: ${resetURL}.\nIf you didn't forget your password, please ignore this email!`;
     try {
-    await sendEmail ({
-        email: user.email,
-        subject: "Your password reset token (valid for 10 min)",
-    });
-    res.status(200).json({
-        status: "success",
-        message: "Token sent to email!"
-    });
-    } catch (error) {
-      user.passwordResetToken = undefine; 
-      user.passwordResetExpires = undefine;
-      await user.save({validateBeforSave: false}); 
-      return res.status(500).json({
-        status: "fail",
-        message: "There was an error sending the email. Try again later!"
-    });
-    }
-   } catch (error) {
-    console.error("Error in forgotPassword: ", error);
-       res.status(500).json({
-           status: "fail",
-           message: "Error processing the forgot password request",
-           error: error.message
-       });
-   }
+        const user = await User.findOne({ email: req.body.email });
+        if (!user) {
+          return res.status(404).json({
+            status: "fail",
+            message: "There is no user with that email address."
+          });
+        }
+      
+        const resetToken = user.createPasswordResetToken();
+        await user.save({ validateBeforeSave: false });
+      
+        const resetURL = `${req.protocol}://${req.get('host')}/api/v1/resetPassword/${resetToken}`;
+        await new Email(user, resetURL).sendPasswordReset();
+      
+        res.status(200).json({
+          status: "success",
+          message: "Token sent to email!"
+        });
+      } catch (error) {
+        res.status(500).json({
+          status: "fail",
+          message: "There was an error processing your request",
+          error: error.message
+        });
+      }
+      
+//    try {
+//        // Log to check if email is received
+//        console.log("Received email: ", req.body.email)
+//        // Get user based on POSTed email
+//     const user = await User.findOne({email: req.body.email});
+//     if (!user) {
+//         return res.status(404).json({
+//             status: "fail",
+//             message: "There is no user with email adress"
+//         });
+//     } 
+
+//     //Generate the random reset token
+//     const resetToken = user.createPasswordResetToken();
+//     await user.save({validateBeforeSave: false}); // If you send the token to the user via email, log that you're doing it (for debugging)
+//        console.log("Password reset token created: ", resetToken);
+//         // If you send the token to the user via email, log that you're doing it (for debugging)
+//         console.log("Password reset token created: ", resetToken);
+//         res.status(200).json({
+//             status: "success",
+//             message: "Password reset token generated"
+//         });
+//         try {
+//     // 3) send it to user's email
+//     const resetURL = `${req.protocol}://${req.get(
+//         "host")}/api/v1/resetPassword/${resetToken}`;
+//     await new Email(user, resetURL).sendPasswordReset();
+//     res.status(200).json({
+//         status: "success",
+//         message: "Token sent to email!"
+//     });
+//     } catch (error) {
+//       user.passwordResetToken = undefined; 
+//       user.passwordResetExpires = undefined;
+//       await user.save({validateBeforeSave: false}); 
+//       return res.status(500).json({
+//         status: "fail",
+//         message: "There was an error sending the email. Try again later!"
+//     });
+//     }
+//    } catch (error) {
+//     // console.error("Error in forgotPassword: ", error);
+//        res.status(500).json({
+//            status: "fail",
+//            message: "Error processing the forgot password request",
+//            error: error.message
+//        });
+//    }
 };
 
 export const resetPassword = async (req, res, next) => {
@@ -231,7 +239,7 @@ export const resetPassword = async (req, res, next) => {
      user.passwordResetExpires = undefined;
      // 3) Update changedPasswordAt property for the user
      // 4) Log the user in, send JWT
-     createSendToken(user, 200, res);
+     await createSendToken(user, 200, res);
 };
 
 export const updatePassword = async (req, res, next) => {
