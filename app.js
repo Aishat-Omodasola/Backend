@@ -1,5 +1,6 @@
 import express from "express";
 import fs from "fs";
+// https://backend-6ajq.onrender.com
 import userRouter from "./router/userRoute.js";
 import { signup, login } from "./controller/authController.js";
 import questionRouter from "./router/questionRoute.js";
@@ -10,6 +11,7 @@ import morgan from "morgan"; // Import morgan
 import rateLimit from "express-rate-limit";
 import mongoSanitize from "express-mongo-sanitize";
 import xss from "xss-clean"
+import cors from "cors"
 
 // Load Environment Variables
 config({ path: "./utilities/.env" });
@@ -38,6 +40,8 @@ app.use(mongoSanitize());
 // Data sanitization against xss
 app.use(xss());
 
+app.use(cors());
+
 // Morgan Middleware for logging HTTP requests
 app.use(morgan('dev'));  // You can change 'dev' to other formats like 'combined', 'short', etc.
 
@@ -52,9 +56,24 @@ app.use("/api", limiter);
 
 // Set security HTTP headers
 app.use(helmet({
-  contentSecurityPolicy: false, // Disable CSP if using inline scripts
+  contentSecurityPolicy: false,// Disable CSP if using inline scripts
 }));
-// app.use(helmet())
+
+// app.js
+app.use((err, req, res, next) => {
+  if (err.message === "Not an image! Please upload only images") {
+    return res.status(400).json({
+      status: "fail",
+      message: err.message
+    });
+  }
+
+  res.status(err.status || 500).json({
+    status: "error",
+    message: err.message || "Internal Server Error",
+  });
+});
+
 // Define Routes
 app.use("/api/v1/questions", questionRouter);
 app.use("/api/v1/users", userRouter); // Mount user routes
@@ -64,5 +83,8 @@ const port = process.env.PORT || 5000;
 app.listen(port, () => {
   console.log(`The app is listening on port ${port}...`);
 });
+
+
+
 
 export default app;

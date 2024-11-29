@@ -1,6 +1,7 @@
 // const express = require("express");
 
 import { Router } from "express";
+import { uploadUserPhoto } from '../controller/userController.js';
 import { getAllUsers, updateMe, deleteMe, resizeUserPhoto} from "../controller/userController.js";
 import { signup, login, forgotPassword, resetPassword, updatePassword, protect } from "../controller/authController.js";
 

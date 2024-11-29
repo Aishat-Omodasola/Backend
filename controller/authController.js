@@ -80,7 +80,7 @@ export const protect = async (req, res, next) => {
     try {
     //1) Getting token and check of it's there
     let token;
-    if(req.headers.authorization && req.headers.authorization.startWith("Bearer")) {
+    if(req.headers.authorization && req.headers.authorization.startsWith("Bearer")) {
      token = req.headers.authorization.split(" ")[1];
     }
     // console.log(token);
@@ -91,8 +91,9 @@ export const protect = async (req, res, next) => {
         });
     }
     //2) Verification Token
+    let decoded;
     try {
-        const decoded = await promisify(jwt.verify)(token, process.env.JWT_SECRET);
+         decoded = await promisify(jwt.verify)(token, process.env.JWT_SECRET);
     // console.log(decoded)
     } catch (error) {
         {
@@ -226,7 +227,7 @@ export const resetPassword = async (req, res, next) => {
         passwordResetToken: hashedToken,
         passwordResetExpires: { $gt: Date.now() }
     });
-     // If token has not expired, and there is user, set yhe new password
+     // If token has not expired, and there is user, set the new password
      if (!user) {
         return res.status(400).json({
             status: "fail",
@@ -239,6 +240,7 @@ export const resetPassword = async (req, res, next) => {
      user.passwordResetExpires = undefined;
      // 3) Update changedPasswordAt property for the user
      // 4) Log the user in, send JWT
+     user.password = undefined;
      await createSendToken(user, 200, res);
 };
 
