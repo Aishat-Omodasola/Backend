@@ -1,6 +1,6 @@
+// https://backend-1-2mgn.onrender.com
 import express from "express";
 import fs from "fs";
-// https://backend-6ajq.onrender.com
 import userRouter from "./router/userRoute.js";
 import { signup, login } from "./controller/authController.js";
 import questionRouter from "./router/questionRoute.js";
@@ -10,15 +10,14 @@ import helmet from "helmet";
 import morgan from "morgan"; // Import morgan
 import rateLimit from "express-rate-limit";
 import mongoSanitize from "express-mongo-sanitize";
-import xss from "xss-clean"
-import cors from "cors"
+import xss from "xss-clean";
+import cors from "cors";
 
 // Load Environment Variables
 config({ path: "./utilities/.env" });
 
 // Database Connection
 const DB = process.env.DATABASE;
-// console.log(DB);
 
 mongoose
   .connect(DB, {})
@@ -33,38 +32,42 @@ mongoose
 const app = express();
 
 // Middleware
-app.use(express.json({ limit: "10kb"}));
+app.use(express.json({ limit: "10kb" }));
 
 // Data sanitization against NoSQL query injection
 app.use(mongoSanitize());
 // Data sanitization against xss
 app.use(xss());
 
-app.use(cors());
+// Handle preflight OPTIONS requests globally (this is handled by CORS middleware)
+app.use(cors({
+  origin: 'http://localhost:3000', // Specify your frontend's origin
+  credentials: true,  // Allow credentials like cookies or tokens
+}));
 
 // Morgan Middleware for logging HTTP requests
 app.use(morgan('dev'));  // You can change 'dev' to other formats like 'combined', 'short', etc.
 
-// Limit request from same API
+// Limit request from the same IP
 const limiter = rateLimit({
-    max: 100,  // Maximum number of requests allowed
-    windowMs: 60 * 60 * 1000, // Time window for the limit (in milliseconds)
-    message: "To many requests from this IP, please try again in an hour!" 
+  max: 100,  // Maximum number of requests allowed
+  windowMs: 60 * 60 * 1000, // Time window for the limit (in milliseconds)
+  message: "Too many requests from this IP, please try again in an hour!"
 });
 // Apply rate limiter middleware
 app.use("/api", limiter);
 
 // Set security HTTP headers
 app.use(helmet({
-  contentSecurityPolicy: false,// Disable CSP if using inline scripts
+  contentSecurityPolicy: false, // Disable CSP if using inline scripts
 }));
 
-// app.js
+// Error handling middleware
 app.use((err, req, res, next) => {
   if (err.message === "Not an image! Please upload only images") {
     return res.status(400).json({
       status: "fail",
-      message: err.message
+      message: err.message,
     });
   }
 
@@ -83,8 +86,5 @@ const port = process.env.PORT || 5000;
 app.listen(port, () => {
   console.log(`The app is listening on port ${port}...`);
 });
-
-
-
 
 export default app;
