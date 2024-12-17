@@ -40,41 +40,74 @@ export const signup = async (req, res, next) => {
         status: "fail",
         message: "Error signing up",
         error: error.message
-    });
-       
-   }
-
-   
+    });   
+   }   
 };
 
 export const login = async (req, res, next) => {
     try {
-        const { email, password } = req.body;
-        // 1) check if email and password exist
-        if(!email || !password) {
-            return res.status(400).json({
-                status: "fail",
-                message: "Please provide email and password!"
-            });
-        }
-        // 2) check if user exist and password correct
-        const user = await User.findOne({email}).select("+password");
-        // const correct = ;
-        if (!user || !(await user.correctPassword(password, user.password))) {
-            return res.status(401).json({
-                status: "fail",
-                message: "Incorrect email or password!"
-            });
-        }
-        // 'pass123' === '$2a$12$1/MLeJGEi4.83/oq69wzdeuHLU35KQbBv39jYNbI5bNxNwIDs6KCe'
-        // console.log(user);
-        // 3) if everything is ok, send Token to client
-        createSendToken(user, 200, res);  
-    } catch (error) {
-        res.status(500).json({error});  
-    }
+      const { email, password } = req.body;
   
-};
+      // 1) Check if email and password exist
+      if (!email || !password) {
+        return res.status(400).json({
+          status: "fail",
+          message: "Please provide both email and password!",
+        });
+      }
+  
+      // 2) Check if user exists and password is correct
+      const user = await User.findOne({ email }).select("+password");
+      if (!user || !(await user.correctPassword(password, user.password))) {
+        return res.status(401).json({
+          status: "fail",
+          message: "Incorrect email or password!",
+        });
+      }
+  
+      // 3) Use createSendToken to handle token creation and sending response
+      createSendToken(user, 200, res);  // This sends the token and user data back to the client
+    } catch (error) {
+      console.error("Login Error:", error.message);
+      res.status(500).json({
+        status: "error",
+        message: "Something went wrong. Please try again later.",
+      });
+    }
+  };
+  
+// export const login = async (req, res, next) => {
+//     try {
+//         const { email, password } = req.body;
+//         // 1) check if email and password exist
+//         if(!email || !password) {
+//             return res.status(400).json({
+//                 status: "fail",
+//                 message: "Please provide email and password!"
+//             });
+//         }
+//         // 2) check if user exist and password correct
+//         const user = await User.findOne({ email }).select("+password");
+//         // const correct = ;
+//         if (!user || !(await user.correctPassword(password, user.password))) {
+//             return res.status(401).json({
+//                 status: "fail",
+//                 message: "Incorrect email or password!"
+//             });
+//         }
+//         // 'pass123' === '$2a$12$1/MLeJGEi4.83/oq69wzdeuHLU35KQbBv39jYNbI5bNxNwIDs6KCe'
+//         // console.log(user);
+//         // 3) if everything is ok, send Token to client
+//         createSendToken(user, 200, res);  
+//     } catch (error) {
+//         console.error("Login Error:", error.message);
+//         res.status(500).json({
+//         status: "error",
+//         message: "Something went wrong. Please try again later.",
+//        });
+ 
+//     } 
+// };
 
 export const protect = async (req, res, next) => {
     try {
